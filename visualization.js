@@ -49,7 +49,12 @@ function drawData(){
     }
 
     function parseDate2(date, time){
-      return parseReceiveDateFullYear(date + "-" + time)
+      var parsedDate = parseReceiveDateFullYear(date + "-" + time);
+      if (parsedDate == null){
+        return parseMailSendTime(date + "-2018-" + time);
+      } else {
+        return parsedDate
+      }
     }
 
     var data = ssv.parse(dataContent, function(d){
