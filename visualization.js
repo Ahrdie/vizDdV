@@ -57,6 +57,23 @@ function drawData(){
       }
     }
 
+    function getAllDates(mdbData){
+      var dates = [];
+
+      function addToDatesIfLegal(dateToAdd){
+        if(dateToAdd != null){
+          dates.push(dateToAdd);
+        }
+      }
+
+      for(var mdb in mdbData){
+        addToDatesIfLegal(mdbData[mdb].send);
+        addToDatesIfLegal(mdbData[mdb].firstInteractionDate);
+        addToDatesIfLegal(mdbData[mdb].secondInteractionDate);
+      }
+      return dates;
+    }
+
     var data = ssv.parse(dataContent, function(d){
       return{
         id:                     +d.identification,
@@ -77,5 +94,48 @@ function drawData(){
     });
 
     console.log(data);
+
+    var height = 300;
+    var width = 500;
+    var margin = {left:50,right:50,top:40,bottom:0}
+    
+    var allDates = getAllDates(data);
+    var timeRange = d3.extent(allDates);
+    var idRange = d3.extent(data, function(d){return d.id})
+    var maxComLength = d3.max(data, function(d){return Math.abs(d.lengthOfCommunication)})
+
+    var y = d3.scaleLinear()
+              .domain([0,maxComLength])
+              .range([height,0]);
+
+    //var x = d3.scaleTime()
+    //          .domain(timeRange)
+    //          .range([0,width]);
+
+    var x = d3.scaleLinear()
+      .domain(idRange)
+      .range([0,width])
+
+    var heightPerBar = width / data.length;
+
+    var yAxis = d3.axisLeft(y);
+    var xAxis = d3.axisBottom(x);
+
+    var svg = d3.select("svg")
+      .attr("height",height + margin.top + margin.bottom)
+      .attr("width",width + margin.left + margin.right);
+
+    var chartGroup = svg.append("g")
+      .attr("transform","translate("+margin.left+","+margin.top+")");
+
+    chartGroup.selectAll("bar")
+        .data(data)
+      .enter().append("rect")
+        .style("fill", "steelblue")
+        .attr("x", function(d) {return x(d.id);})
+        .attr("width", 1)
+        .attr("y", function(d){ return y(d.lengthOfCommunication);})
+        .attr("height", function(d) { return height - y(d.lengthOfCommunication);})
+
   });
 }
