@@ -1,9 +1,16 @@
 var dataContent;
 
-d3.text("data.csv").then(function(text){
+d3.text("https://gist.githubusercontent.com/Ahrdie/f9283466f24b6c29015350dfd84188f0/raw/5108d00b7f6325c594f7e62fe6439b96b8a2cbc4/data.csv").then(function(text){
     dataContent = text;
     drawData();
 });
+
+// https://github.com/wbkd/d3-extended
+d3.selection.prototype.moveToFront = function() {  
+  return this.each(function(){
+    this.parentNode.appendChild(this);
+  });
+};
 
 function drawData(){
   d3.json("https://unpkg.com/d3-time-format@2/locale/de-DE.json").then(function(locale) {
@@ -104,9 +111,9 @@ function drawData(){
       };
     });
 
-    var height = 1000;
-    var width = 1000;
-    var margin = {left:100,right:50,top:40,bottom:200}
+    var margin = {left:100,right:50,top:120,bottom:200}
+    var height = 500;
+    var width = 960 - margin.left - margin.right;
     
     var allDates = getAllDates(data);
     var timeRange = d3.extent(allDates);
@@ -138,13 +145,16 @@ function drawData(){
     var chartGroup = svg.append("g")
       .attr("transform","translate("+margin.left+","+margin.top+")");
 
+    var rectHeight = 8;
+    var rectCorners = 3;
+
     chartGroup.append("g")
     .attr("class","dataLines")
     .selectAll("line")
         .data(data.filter(function(d){return d.lengthOfCommunication > 1
                                           && d.final;}))
-      .enter().append("line")
-        .attr("stroke", function(d){
+      .enter().append("rect")
+        .attr("fill", function(d){
           switch (d.party){
             case "SPD":
               return "red";
@@ -165,30 +175,36 @@ function drawData(){
           }
         })
         .attr("defined", true)
-        .attr("x1", function(d){return x(d.send);})
-        .attr("y1", function(d){return y(d.lengthOfCommunication);})
+        .attr("x", function(d){return x(d.send);})
+        .attr("y", function(d){return y(d.lengthOfCommunication) + rectHeight/2;})
+        .attr("width", function(d){ return x(d.firstInteractionDate) - x(d.send);})
+        .attr("height", rectHeight)
+        .attr("rx", rectCorners)
+        .attr("ry", rectCorners)
         .on("mouseover", function(d) {
+            d3.select(this)
+              .attr("fill-opacity", 1)
+              .moveToFront();
             div.transition()
                 .duration(200)
-                .style("opacity", .9);  
+                .style("opacity", .8);  
             div.html("<h3>" + d.firstname+ " "
                             + d.surname + " ("
                             + d.party + ")</h3><p>"
-                            + formatReadableDate(d.send) + "-"
+                            + "Zeitraum bis zur Antwort: " + formatReadableDate(d.send) + " - "
                             + formatReadableDate(d.firstInteractionDate) + "</p><p>"
                             + d.lengthOfCommunication + " Zeichen</p>"
                     )
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
+                .style("left", (d3.event.pageX - 100) + "px")
+                .style("top", (d3.event.pageY - 120) + "px");
             })
         .on("mouseout", function(d) {
+            d3.select(this)
+              .attr("fill-opacity", 0.3)
             div.transition()
                 .duration(500)
                 .style("opacity", 0);
             })
-        
-        .attr("x2", function(d){ return x(d.firstInteractionDate);})
-        .attr("y2", function(d){ return y(d.lengthOfCommunication);}) 
 
     chartGroup.append("g")
       .attr("class","axis y")
@@ -200,7 +216,7 @@ function drawData(){
         .attr("x",0 - (height / 2))
         .attr("dy", "1em")
         .style("text-anchor", "middle")
-        .text("Length of Communication");
+        .text("Zeichenlänge der Kommunikation");
 
     chartGroup.append("g")
       .attr("class","axis x")
@@ -210,6 +226,6 @@ function drawData(){
         .attr("class","label")
         .attr("transform","translate(" + (width/2) + " ," + 40 + ")")
         .style("text-anchor", "middle")
-        .text("Date");
+        .text("Datum");
   });
 }

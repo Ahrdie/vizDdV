@@ -4,9 +4,7 @@
 }
 
 .dataLines {
-    stroke-width: 4;
-    opacity: 0.5;
-    stroke-linecap: round;
+    fill-opacity: 0.4;
 }
 
 .label {
@@ -14,6 +12,7 @@
     stroke-width: 0;
     font-size: 15px;
 }
+
 div.tooltip {   
     position: absolute;         
     text-align: center;         
